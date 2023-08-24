@@ -1,4 +1,6 @@
 import sys
+import time
+
 import paramiko
 import requests
 import json
@@ -54,25 +56,53 @@ def ssh_shell():
         ssh_client.connect(hostname=str(host),port=port,username=str(user),pkey= key)
     else:
         ssh_client.connect(hostname=str(host),port=port,username=str(user),password= user_password, look_for_keys=False, allow_agent=False)
+    channel = ssh_client.get_transport().open_session()
+    channel.get_pty()
+    channel.invoke_shell()
     is_remotely_connected_by_ssh = True
+    global is_first_command
+    is_first_command = True
     while is_remotely_connected_by_ssh:
-        command = input(user_inputs['user'] +':~$ ')
-        if command=='close':
-            ssh_client.close()
-            print('Goodbye ! Hope you enjoyed KDownloader ! ')
-            exit()
-        if command=='exit':
+        command = input(user_inputs['user']+':~$ ')
+        if command == 'exit':
             is_remotely_connected_by_ssh = False
             ssh_client.close()
             main_menu()
-        if command=='logout':
-            logout()
-            main_menu()
+
+        # print("status : " + str(status_ready))
+        channel.send(command + "\n")
+
+        if channel.recv_ready():
+            output = channel.recv(1024)
+            sys.stdout.write(output.decode())
+            is_first_command = False
+            while not str(output).endswith("\\r\\n$ \'"):
+                if str(output).endswith("\\r\\r\\n$ \'") or str(output).endswith("b\'$ \'" ):
+                    break
+                output = channel.recv(1024)
+                sys.stdout.write(output.decode())
         else:
-            # formatted_output =[]
-            stdin,stdout,stderr=ssh_client.exec_command(command)
-            output = stdout.read().decode().replace('\n','  ')
-            print(output)
+            time.sleep(0.5)
+            if not (channel.recv_ready()):
+                break
+        # command = input(user_inputs['user'] +':~$ ')
+        # if command=='close':
+        #     ssh_client.close()
+        #     print('Goodbye ! Hope you enjoyed KDownloader ! ')
+        #     exit()
+        # if command=='exit':
+        #     is_remotely_connected_by_ssh = False
+        #     ssh_client.close()
+        #     main_menu()
+        # if command=='logout':
+        #     logout()
+        #     main_menu()
+        # else:
+        #     # formatted_output =[]
+        #     stdin,stdout,stderr=ssh_client.exec_command(command)
+        #     output = stdout.read().decode().replace('\n','  ')
+        #     print(output)
+
 def main_menu():
     if user_inputs['user']==None:
      print('You are currently in the main menu, please login')
