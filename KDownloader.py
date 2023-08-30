@@ -59,32 +59,56 @@ def ssh_shell():
     channel = ssh_client.get_transport().open_session()
     channel.get_pty()
     channel.invoke_shell()
+    # channel.send("stty -echo\n")
     is_remotely_connected_by_ssh = True
     global is_first_command
     is_first_command = True
+    global command_to_execute
+    command_to_execute = ''
+    global output_end
+    output_end = ""
+    global counter
+    counter = 0
+    global output
     while is_remotely_connected_by_ssh:
-        command = input(user_inputs['user']+':~$ ')
+        command = input(user_inputs['user'] + ':~$ ')
         if command == 'exit':
             is_remotely_connected_by_ssh = False
+            is_first_command = True
             ssh_client.close()
             main_menu()
 
-        # print("status : " + str(status_ready))
         channel.send(command + "\n")
 
-        if channel.recv_ready():
+        # if is_first_command:
+
+        # else :
+            # print("status : " + str(status_ready))
+        # if channel.recv_ready():
+        if is_first_command :
+            output = channel.recv(1024)
+                # print("first output" + str(output))
+            sys.stdout.write(output.decode())
+            output = channel.recv(1024)
+                # print("second output" + str(output))
+        else:
             output = channel.recv(1024)
             sys.stdout.write(output.decode())
-            is_first_command = False
-            while not str(output).endswith("\\r\\n$ \'"):
-                if str(output).endswith("\\r\\r\\n$ \'") or str(output).endswith("b\'$ \'" ):
-                    break
+            output = channel.recv(1024)
+            sys.stdout.write(output.decode())
+        while not str(output).endswith("\\r\\n$ \'"):
+            if str(output).endswith("\\r\\r\\n$ \'") or str(output).endswith("b\'$ \'" ):
+                break
+            else:
                 output = channel.recv(1024)
                 sys.stdout.write(output.decode())
-        else:
-            time.sleep(0.5)
-            if not (channel.recv_ready()):
-                break
+        # else:
+        #     time.sleep(0.5)
+        #     if not (channel.recv_ready()):
+        #         break
+        is_first_command = False
+        # output_end = str(output)[-3]
+        # counter+=1
         # command = input(user_inputs['user'] +':~$ ')
         # if command=='close':
         #     ssh_client.close()
