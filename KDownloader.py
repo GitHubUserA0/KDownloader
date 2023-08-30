@@ -77,7 +77,6 @@ def ssh_shell():
             is_first_command = True
             ssh_client.close()
             main_menu()
-
         channel.send(command + "\n")
 
         # if is_first_command:
@@ -86,22 +85,25 @@ def ssh_shell():
             # print("status : " + str(status_ready))
         # if channel.recv_ready():
         if is_first_command :
-            output = channel.recv(1024)
+            output = channel.recv(99999)
                 # print("first output" + str(output))
             sys.stdout.write(output.decode())
-            output = channel.recv(1024)
+            output = channel.recv(99999)
                 # print("second output" + str(output))
         else:
-            output = channel.recv(1024)
+            output = channel.recv(99999)
             sys.stdout.write(output.decode())
-            output = channel.recv(1024)
-            sys.stdout.write(output.decode())
+            # output = channel.recv(99999)
+            # print("output 3 : " + str(output))
+            # sys.stdout.write(output.decode())
         while not str(output).endswith("\\r\\n$ \'"):
             if str(output).endswith("\\r\\r\\n$ \'") or str(output).endswith("b\'$ \'" ):
                 break
             else:
-                output = channel.recv(1024)
+                output = channel.recv(99999)
                 sys.stdout.write(output.decode())
+                # output = channel.recv(99999)
+                # sys.stdout.write(output.decode())
         # else:
         #     time.sleep(0.5)
         #     if not (channel.recv_ready()):
@@ -240,6 +242,9 @@ def download():
  else:
      ssh_client.connect(hostname=str(host),port=port,username=str(user),password=user_password, look_for_keys=False, allow_agent=False)
 
+ channel = ssh_client.get_transport().open_session()
+ channel.get_pty()
+ channel.invoke_shell()
  user_filename = input('type the name you want the file to have or let this field empty to name it by default : ')
  while len(user_filename)==0:
       user_filename = input('please type a name for the file : ')
@@ -253,7 +258,7 @@ def download():
  stdin, stdout, stderr = ssh_client.exec_command(command)
  output = stdout.read().decode()
  ssh_client.close()
- print(output)
+ print("File successfully downloaded ! ")
 
 print (welcome_message)
 main_menu()
