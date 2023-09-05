@@ -1,6 +1,4 @@
 import sys
-import time
-
 import paramiko
 import requests
 import json
@@ -77,58 +75,29 @@ def ssh_shell():
             is_first_command = True
             ssh_client.close()
             main_menu()
+        if command=='logout':
+            logout()
+            ssh_client.close()
+            main_menu()
+        if command=='close':
+            ssh_client.close()
+            print('Goodbye ! Hope you enjoyed KDownloader ! ')
+            exit()
         channel.send(command + "\n")
-
-        # if is_first_command:
-
-        # else :
-            # print("status : " + str(status_ready))
-        # if channel.recv_ready():
         if is_first_command :
             output = channel.recv(99999)
-                # print("first output" + str(output))
             sys.stdout.write(output.decode())
             output = channel.recv(99999)
-                # print("second output" + str(output))
         else:
             output = channel.recv(99999)
             sys.stdout.write(output.decode())
-            # output = channel.recv(99999)
-            # print("output 3 : " + str(output))
-            # sys.stdout.write(output.decode())
         while not str(output).endswith("\\r\\n$ \'"):
             if str(output).endswith("\\r\\r\\n$ \'") or str(output).endswith("b\'$ \'" ):
                 break
             else:
                 output = channel.recv(99999)
                 sys.stdout.write(output.decode())
-                # output = channel.recv(99999)
-                # sys.stdout.write(output.decode())
-        # else:
-        #     time.sleep(0.5)
-        #     if not (channel.recv_ready()):
-        #         break
         is_first_command = False
-        # output_end = str(output)[-3]
-        # counter+=1
-        # command = input(user_inputs['user'] +':~$ ')
-        # if command=='close':
-        #     ssh_client.close()
-        #     print('Goodbye ! Hope you enjoyed KDownloader ! ')
-        #     exit()
-        # if command=='exit':
-        #     is_remotely_connected_by_ssh = False
-        #     ssh_client.close()
-        #     main_menu()
-        # if command=='logout':
-        #     logout()
-        #     main_menu()
-        # else:
-        #     # formatted_output =[]
-        #     stdin,stdout,stderr=ssh_client.exec_command(command)
-        #     output = stdout.read().decode().replace('\n','  ')
-        #     print(output)
-
 def main_menu():
     if user_inputs['user']==None:
      print('You are currently in the main menu, please login')
@@ -175,8 +144,6 @@ def main_menu():
      else :
         print('Please, select a valid choice')
         main_menu()
-
-
 def unlock_DDL_link_alldebrid(link):
     unlocked_link_details = {}
     url = "https://api.alldebrid.com/v4/link/unlock?agent=KDownloader&apikey="+user_inputs['api_key']+"&link="+link
@@ -185,7 +152,6 @@ def unlock_DDL_link_alldebrid(link):
     unlocked_link_details['filename'] = json.loads(json.dumps(data, indent=2))['data']['filename']
     unlocked_link_details['host'] = json.loads(json.dumps(data, indent=2))['data']['host']
     return unlocked_link_details
-
 def unlocked_download():
     host = user_inputs['host']
     port = user_inputs['port']
@@ -213,6 +179,9 @@ def unlocked_download():
         default_filename = unlock_DDL_link_alldebrid(link).get('filename')
         filename=default_filename
         user_filename = input('type the name you want the file to have or let this field empty to name it by default')
+        channel = ssh_client.get_transport().open_session()
+        channel.get_pty()
+        channel.invoke_shell()
         if len(user_filename)!=0:
             filename= user_filename
         default_download_path = '../../Downloads'
@@ -220,12 +189,21 @@ def unlocked_download():
         user_download_path = input('type the path you want the file to be downloaded or let this field empty to download the file in the folder \'../../Downloads\' by default : ')
         if len(user_download_path)!=0:
           download_path=user_download_path
-        command = 'cd ' + download_path +'; curl --verbose '+unlock_DDL_link_alldebrid(link).get('link')+' >'+filename
-        stdin, stdout, stderr = ssh_client.exec_command(command)
-        output = stdout.read().decode()
+        command = 'cd ' + download_path + '; curl ' +unlock_DDL_link_alldebrid(link).get('link')+ ' >' + filename
+        channel.send(command + "\n")
+        output = channel.recv(99999)
+        sys.stdout.write(output.decode())
+        output = channel.recv(99999)
+        while not str(output).endswith("\\r\\n$ \'"):
+            if str(output).endswith("\\r\\r\\n$ \'") or str(output).endswith("b\'$ \'"):
+                break
+            else:
+                output = channel.recv(99999)
+                sys.stdout.write(output.decode())
+        # output = stdout.read().decode()
         ssh_client.close()
+        print("File successfully downloaded ! ")
         print(output)
-
 def download():
  host = user_inputs['host']
  port = user_inputs['port']
@@ -241,7 +219,6 @@ def download():
      ssh_client.connect(hostname=str(host),port=port,username=str(user),pkey= key)
  else:
      ssh_client.connect(hostname=str(host),port=port,username=str(user),password=user_password, look_for_keys=False, allow_agent=False)
-
  channel = ssh_client.get_transport().open_session()
  channel.get_pty()
  channel.invoke_shell()
@@ -254,9 +231,17 @@ def download():
  user_download_path = input('type the path you want the file to be downloaded or let this field empty to download the file in the folder \'../../Downloads\' by default : ')
  if len(user_download_path)!=0:
       download_path=user_download_path
- command = 'cd ' + download_path +'; curl --verbose '+link+' >'+filename
- stdin, stdout, stderr = ssh_client.exec_command(command)
- output = stdout.read().decode()
+ command = 'cd ' + download_path +'; curl '+link+' >'+filename
+ channel.send(command + "\n")
+ output = channel.recv(99999)
+ sys.stdout.write(output.decode())
+ output = channel.recv(99999)
+ while not str(output).endswith("\\r\\n$ \'"):
+     if str(output).endswith("\\r\\r\\n$ \'") or str(output).endswith("b\'$ \'"):
+        break
+     else:
+        output = channel.recv(99999)
+        sys.stdout.write(output.decode())
  ssh_client.close()
  print("File successfully downloaded ! ")
 
