@@ -9,22 +9,6 @@ def connection_user_input():
     user_inputs['host'] = input('host : ')
     user_inputs['port'] = input('port : ')
     user_inputs['user'] = input('user : ')
-    valid_debrid_choice = False
-    while not valid_debrid_choice:
-        print('0 - type \'0\' if you don\'t have Alldebrid nor Realdebrid')
-        print('1 - type \'1\' to select Alldebrid as debrid service')
-        print('2 - type \'2\' to select Realdebrid as debrid service')
-        debrid_choice = input("Please, choose an option : ")
-        if debrid_choice=='1':
-            user_inputs['debrid_service']="Alldebrid"
-            valid_debrid_choice = True
-        elif debrid_choice=='2':
-            user_inputs['debrid_service']="Realdebrid"
-            valid_debrid_choice = True
-        elif debrid_choice=='0':
-            valid_debrid_choice = True
-        if debrid_choice!='0' and debrid_choice !='1' and debrid_choice!='2':
-            print("Please, select a valid option")
     connection_mode_is_valid = False
     while not connection_mode_is_valid:
      connection_mode = input('Please choose a connection mode to the server :\n 1 - type \'1\' to connect with a password\n 2 - type \'2\' to connect with a SSH key\nmode : ')
@@ -40,6 +24,24 @@ def connection_user_input():
         key = paramiko.RSAKey.from_private_key_file(key_path,key_password)
      else:
         user_password = user_inputs['user\'s password'] = input('type your password : ')
+    valid_debrid_choice = False
+    while not valid_debrid_choice:
+        print('0 - type \'0\' if you don\'t have Alldebrid nor Realdebrid')
+        print('1 - type \'1\' to select Alldebrid as debrid service')
+        print('2 - type \'2\' to select Realdebrid as debrid service')
+        debrid_choice = input("Please, choose an option : ")
+        if debrid_choice=='1':
+            user_inputs['debrid_service']="Alldebrid"
+            user_inputs['api_key']=input("Please, type your API key or token : ")
+            valid_debrid_choice = True
+        elif debrid_choice=='2':
+            user_inputs['debrid_service']="Realdebrid"
+            user_inputs['api_key'] = input("Please, type your API key or token : ")
+            valid_debrid_choice = True
+        elif debrid_choice=='0':
+            valid_debrid_choice = True
+        if debrid_choice!='0' and debrid_choice !='1' and debrid_choice!='2':
+            print("Please, select a valid option")
     ssh_client = paramiko.SSHClient()
     ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     try:
@@ -146,10 +148,37 @@ def main_menu():
      if user_choice=='3':
         download()
      if user_choice=='4':
-        user_inputs['debrid_service'] = input('your debrid service (type \'none\' if you don\'t have one) : ')
-        main_menu()
+         valid_debrid_choice = False
+         while not valid_debrid_choice:
+             print('0 - type \'0\' if you don\'t have Alldebrid nor Realdebrid')
+             print('1 - type \'1\' to select Alldebrid as debrid service')
+             print('2 - type \'2\' to select Realdebrid as debrid service')
+             debrid_choice = input("Please, choose an option : ")
+             if debrid_choice == '1':
+                 user_inputs['debrid_service'] = "Alldebrid"
+                 user_inputs['api_key'] = input("Please, type your API key or token : ")
+                 valid_debrid_choice = True
+             elif debrid_choice == '2':
+                 user_inputs['debrid_service'] = "Realdebrid"
+                 user_inputs['api_key'] = input("Please, type your API key or token : ")
+                 valid_debrid_choice = True
+             elif debrid_choice == '0':
+                 valid_debrid_choice = True
+             elif debrid_choice != '0' and debrid_choice != '1' and debrid_choice != '2':
+                 print("Please, select a valid option")
+         if debrid_choice=='1' or debrid_choice=='2':
+            print("As your debrid service changed, please don\'t forget to change your API key or token")
+            user_inputs['api_key']= input("Please, type your new API key or token : ")
+         else:
+             print("As you don\'t have a debrid service anymore, your former API key or token has been removed from KDownloader")
+             user_inputs['api_key'] = None
+         main_menu()
      if user_choice=='5':
-        user_inputs['api_key'] = input('your token or api key for your debrid service (type \'none\' if you don\'t have one) : ')
+        new_API_key = input(' Please, type your token or api key for your debrid service (type \'none\' if you don\'t have one) : ')
+        if new_API_key.lower()=="none":
+            user_inputs['api_key'] = None
+        else:
+            user_inputs['api_key'] = new_API_key
         main_menu()
      if user_choice=='6':
         logout()
