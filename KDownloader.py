@@ -5,6 +5,7 @@ import json
 user_inputs_keys = ['host','port','user','key\'s password','user\'s password','key_path','debrid_service','api_key','connection_mode']
 user_inputs = dict.fromkeys(user_inputs_keys)
 welcome_message = 'Welcome to KDownloader, please login'
+default_download_path = input("Welcome to KDownloader, please, type the default path where you want your files to be downloaded : ")
 def connection_user_input():
     user_inputs['host'] = input('host : ')
     user_inputs['port'] = input('port : ')
@@ -117,6 +118,7 @@ def ssh_shell():
                 sys.stdout.write(output.decode())
         is_first_command = False
 def main_menu():
+
     if user_inputs['user']==None:
      print('You are currently in the main menu, please login')
      print('0 - type \'0\' to login')
@@ -223,13 +225,12 @@ def unlocked_download():
         link = input('link : ')
         default_filename = unlock_DDL_link_alldebrid(link).get('filename')
         filename=default_filename
-        user_filename = input('type the name you want the file to have or let this field empty to name it by default')
+        user_filename = input('type the name you want the file to have or let this field empty to name it by default : ')
         channel = ssh_client.get_transport().open_session()
         channel.get_pty()
         channel.invoke_shell()
         if len(user_filename)!=0:
             filename= user_filename
-        default_download_path = '../../Downloads'
         download_path = default_download_path
         user_download_path = input('type the path you want the file to be downloaded or let this field empty to download the file in the folder \'../../Downloads\' by default : ')
         if len(user_download_path)!=0:
@@ -271,7 +272,6 @@ def download():
  while len(user_filename)==0:
       user_filename = input('please type a name for the file : ')
  filename = user_filename
- default_download_path = '../../Downloads'
  download_path = default_download_path
  user_download_path = input('type the path you want the file to be downloaded or let this field empty to download the file in the folder \'../../Downloads\' by default : ')
  if len(user_download_path)!=0:
@@ -290,5 +290,5 @@ def download():
  ssh_client.close()
  print("File successfully downloaded ! ")
 
-print (welcome_message)
+# print (welcome_message)
 main_menu()
