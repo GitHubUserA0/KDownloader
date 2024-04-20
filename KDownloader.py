@@ -2,6 +2,9 @@ import sys
 import paramiko
 import requests
 import json
+
+from paramiko.client import MissingHostKeyPolicy
+
 user_inputs_keys = ['host','port','user','key\'s password','user\'s password','key_path','debrid_service','api_key','connection_mode']
 user_inputs = dict.fromkeys(user_inputs_keys)
 welcome_message = 'Welcome to KDownloader, please login'
@@ -44,7 +47,8 @@ def connection_user_input():
         if debrid_choice!='0' and debrid_choice !='1' and debrid_choice!='2':
             print("Please, select a valid option")
     ssh_client = paramiko.SSHClient()
-    ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    ssh_client.load_system_host_keys()
+    ssh_client.set_missing_host_key_policy(MissingHostKeyPolicy)
     try:
         if user_inputs['connection_mode']=='SSH_key_mode':
          ssh_client.connect(hostname=str(user_inputs['host']), port=user_inputs['port'], username=str(user_inputs['user']),pkey=key)
@@ -67,7 +71,8 @@ def ssh_shell():
     key_path = user_inputs['key_path']
     user_password= user_inputs['user\'s password']
     ssh_client = paramiko.SSHClient()
-    ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    ssh_client.load_system_host_keys()
+    ssh_client.set_missing_host_key_policy(MissingHostKeyPolicy)
     if user_inputs['connection_mode']=='SSH_key_mode':
         key = paramiko.RSAKey.from_private_key_file(key_path, ssh_key_password)
         ssh_client.connect(hostname=str(host),port=port,username=str(user),pkey= key)
@@ -207,7 +212,8 @@ def unlocked_download():
     key_path = user_inputs['key_path']
     user_password = user_inputs['user\'s password']
     ssh_client = paramiko.SSHClient()
-    ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    ssh_client.load_system_host_keys()
+    ssh_client.set_missing_host_key_policy(MissingHostKeyPolicy)
     if user_inputs['connection_mode'] == 'SSH_key_mode':
         key = paramiko.RSAKey.from_private_key_file(key_path, ssh_key_password)
         ssh_client.connect(hostname=str(host), port=port, username=str(user), pkey=key)
@@ -259,7 +265,8 @@ def download():
  user_password= user_inputs['user\'s password']
  link = input('link : ')
  ssh_client = paramiko.SSHClient()
- ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+ ssh_client.load_system_host_keys()
+ ssh_client.set_missing_host_key_policy(MissingHostKeyPolicy)
  if user_inputs['connection_mode']=='SSH_key_mode':
      key = paramiko.RSAKey.from_private_key_file(key_path, ssh_key_password)
      ssh_client.connect(hostname=str(host),port=port,username=str(user),pkey= key)
