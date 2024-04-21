@@ -2,7 +2,7 @@ import sys
 import paramiko
 import requests
 import json
-
+import requests
 from paramiko.client import MissingHostKeyPolicy
 
 user_inputs_keys = ['host','port','user','key\'s password','user\'s password','key_path','debrid_service','api_key','connection_mode']
@@ -114,14 +114,21 @@ def ssh_shell():
             output = channel.recv(99999)
         else:
             output = channel.recv(99999)
-            sys.stdout.write(output.decode())
+            #print(f'response :{output.decode()}')
+            #sys.stdout.write(output.decode())
         while not str(output).endswith("\\r\\n$ \'"):
             if str(output).endswith("\\r\\r\\n$ \'") or str(output).endswith("b\'$ \'" ):
                 break
             else:
                 output = channel.recv(99999)
-                sys.stdout.write(output.decode())
+                res = output.decode()
+                res_list = list(res)
+                res_list[len(res_list)-2] = ''
+                res_list[len(res_list) - 3] = ''
+                new_string = ''.join(res_list)
+                sys.stdout.write(new_string)
         is_first_command = False
+        #C:/Users/Kaiserlolork/Desktop/SSH_server/Keys/Kaiserlolork/id_rsa.ppk
 def main_menu():
 
     if user_inputs['user']==None:
@@ -281,6 +288,10 @@ def download():
  filename = user_filename
  download_path = default_download_path
  user_download_path = input('type the path you want the file to be downloaded or let this field empty to download the file in the folder \'../../Downloads\' by default : ')
+ response = requests.head(link)
+ content_length = response.headers.get('Content-Length')
+ file_size = int(content_length) if content_length else None
+ print(f'File size: {file_size} bytes')
  if len(user_download_path)!=0:
       download_path=user_download_path
  command = 'cd ' + download_path +'; curl '+link+' >'+filename
