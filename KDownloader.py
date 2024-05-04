@@ -1,8 +1,10 @@
 import sys
+import time
+
 import paramiko
 import requests
 import json
-import requests
+
 from paramiko.client import MissingHostKeyPolicy
 
 user_inputs_keys = ['host','port','user','key\'s password','user\'s password','key_path','debrid_service','api_key','connection_mode']
@@ -79,56 +81,49 @@ def ssh_shell():
     else:
         ssh_client.connect(hostname=str(host),port=port,username=str(user),password= user_password, look_for_keys=False, allow_agent=False)
     channel = ssh_client.get_transport().open_session()
+    channel.settimeout(None)
     channel.get_pty()
     channel.invoke_shell()
-    # channel.send("stty -echo\n")
-    is_remotely_connected_by_ssh = True
+    global output
     global is_first_command
+    is_remotely_connected_by_ssh = True
     is_first_command = True
     global command_to_execute
     command_to_execute = ''
+    channel.send(command_to_execute)
+    is_first_command = False
+    output = channel.recv(99999)
+    sys.stdout.write(output.decode()[len(command_to_execute):])
     global output_end
     output_end = ""
     global counter
     counter = 0
-    global output
     while is_remotely_connected_by_ssh:
         command = input(user_inputs['user'] + ':~$ ')
         if command == 'exit':
             is_remotely_connected_by_ssh = False
-            is_first_command = True
             ssh_client.close()
             main_menu()
-        if command=='logout':
+        if command == 'logout':
             logout()
             ssh_client.close()
             main_menu()
-        if command=='close':
+        if command == 'close':
             ssh_client.close()
             print('Goodbye ! Hope you enjoyed KDownloader ! ')
             exit()
-        channel.send(command + "\n")
-        if is_first_command :
-            output = channel.recv(99999)
-            sys.stdout.write(output.decode())
-            output = channel.recv(99999)
         else:
+            channel.send(command + "\n")
+            time.sleep(1)
             output = channel.recv(99999)
-            #print(f'response :{output.decode()}')
-            #sys.stdout.write(output.decode())
+            sys.stdout.write(output.decode()[len(command):])
         while not str(output).endswith("\\r\\n$ \'"):
             if str(output).endswith("\\r\\r\\n$ \'") or str(output).endswith("b\'$ \'" ):
                 break
             else:
                 output = channel.recv(99999)
-                res = output.decode()
-                res_list = list(res)
-                res_list[len(res_list)-2] = ''
-                res_list[len(res_list) - 3] = ''
-                new_string = ''.join(res_list)
-                sys.stdout.write(new_string)
+                sys.stdout.write(output.decode())
         is_first_command = False
-        #C:/Users/Kaiserlolork/Desktop/SSH_server/Keys/Kaiserlolork/id_rsa.ppk
 def main_menu():
 
     if user_inputs['user']==None:
@@ -259,7 +254,7 @@ def unlocked_download():
             else:
                 output = channel.recv(99999)
                 sys.stdout.write(output.decode())
-        # output = stdout.read().decode()
+        #output = sys.stdout.read().decode()
         ssh_client.close()
         print("File successfully downloaded ! ")
         print(output)
@@ -288,10 +283,6 @@ def download():
  filename = user_filename
  download_path = default_download_path
  user_download_path = input('type the path you want the file to be downloaded or let this field empty to download the file in the folder \'../../Downloads\' by default : ')
- response = requests.head(link)
- content_length = response.headers.get('Content-Length')
- file_size = int(content_length) if content_length else None
- print(f'File size: {file_size} bytes')
  if len(user_download_path)!=0:
       download_path=user_download_path
  command = 'cd ' + download_path +'; curl '+link+' >'+filename
@@ -310,3 +301,4 @@ def download():
 
 # print (welcome_message)
 main_menu()
+#C:/Users/Kaiserlolork/Desktop/SSH_server/Keys/Kaiserlolork/id_rsa.ppk
